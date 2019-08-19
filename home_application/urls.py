@@ -17,4 +17,5 @@ urlpatterns = patterns(
     (r'^dev-guide/$', 'dev_guide'),
     (r'^contactus/$', 'contactus'),
     (r'^devopsofbk/$', 'devopsofbk'),
+    (r'^helloworld/$', 'helloworld'),
 )

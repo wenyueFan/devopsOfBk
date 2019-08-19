@@ -11,7 +11,6 @@ See the License for the specific language governing permissions and limitations 
 
 from common.mymako import render_mako_context
 
-
 def home(request):
     """
     首页
@@ -32,8 +31,14 @@ def contactus(request):
     """
     return render_mako_context(request, '/home_application/contact.html')
 
-def devopsofbk(request):
+def devopsofbk(request, year):
     """
 
     """
     return render_mako_context(request, '/home_application/devopsofbk.html')
+def helloworld(request):
+    """
+
+    """
+    return render_mako_context(request, '/home_application/devopsofbk.html')
+

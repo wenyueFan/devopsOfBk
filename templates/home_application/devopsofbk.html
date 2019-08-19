@@ -11,6 +11,14 @@
 社区版安装文档：http://docs.bk.tencent.com/bkce_install_guide/
 
 1.2 开发机本地数据库安装(本例使用 MariaDB，也可使用 Mysql 或者 sqllite)</p>
+{% block content %}
+<h1>Articles for {{ year }}</h1>
 
+{% for article in article_list %}
+    <p>{{ article.headline }}</p>
+    <p>By {{ article.reporter.full_name }}</p>
+    <p>Published {{ article.pub_date|date:"F j, Y" }}</p>
+{% endfor %}
+{% endblock %}
 </body>
 </html>

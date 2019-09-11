@@ -14,8 +14,11 @@ from django.conf.urls import patterns
 urlpatterns = patterns(
     'home_application.views',
     (r'^$', 'home'),
-    (r'^dev-guide/$', 'dev_guide'),
-    (r'^contactus/$', 'contactus'),
-    (r'^devopsofbk/$', 'devopsofbk'),
-    (r'^helloworld/$', 'helloworld'),
+    (r'^dbexchangelog/$', 'dbexchangelog'),
+    (r'^getDbExchangeLog/$', 'getDbExchangeLog'),
+    (r'^newDbExchangeLog/$', 'newDbExchangeLog'),
+    (r'^save_DbExchangeLog/$', 'save_DbExchangeLog'),
+    (r'^search_instFromBK/$', 'search_instFromBK'),
+    (r'^showComputerRoom/$', 'showComputerRoom'),
+
 )

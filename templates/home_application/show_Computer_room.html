@@ -1,0 +1,175 @@
+<%inherit file="/base.html"/>
+<%block name="content">
+<div class="container-fluid" id="computer_room"/>
+<link href="${STATIC_URL}css/computer_room_2d.css" rel="stylesheet">
+<link href="${STATIC_URL}css/jquery-ui.min.css" rel="stylesheet">
+<script>
+    function GetQueryString(name) {
+        var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i");
+        var r = window.location.search.substr(1).match(reg);
+        if(r != null) return decodeURI(r[2]);
+        return null;
+    }
+    $(function () {
+        $(document).tooltip({
+            position: { my: "left+50 center", at: "right center" },
+            items: "[data-geo]",
+            content: function() {
+                var element = $( this );
+                console.log(element.is( "[data-geo]" ));
+                if ( element.is( "[data-geo]" ) ) {
+                    var text = element.text();
+                    var content = '';
+					if(isIntNum(text)){
+						content += "<div>单元 "+ text +" 可使用</div>";
+					}else{
+						text = text.split("@@")[1] + "";
+						var infoArray= text.split("@");
+						content = "<div>";
+						infoArray.forEach(function (info) {
+                            content += info+"<br/>"
+                        })
+						content += "</div>";
+					}
+                    return content;
+                }
+
+            }
+        });
+        var jfid=GetQueryString("jfid");
+        $.ajax({
+            url: "${SITE_URL}search_instFromBK/",
+            type: 'POST',
+            data: {'jfid':jfid},
+            dataType: 'json',
+            success: function(res){
+            //获取数据成功
+                var map = new Map();
+                var result = res.result;
+                if (result.code == 0){
+                    var data = result.data;
+                    var info = data.info;
+                    for(var i = 0;i<info.length;i++){
+                        var inst = info[i];
+                        var jg = inst.jskj_jg;
+                        var jw = inst.jskj_jw;
+                        if(jg == undefined || jw == undefined) continue;
+                        //console.log(inst.bk_inst_name +'@'+ jg+'@'+jw);
+                        if(!isIntNum(jw)){
+                            var temp = jw.split('-');
+                            jw=temp[0];
+                            inst.jw_length = temp[1] - temp[0] + 1;
+                        }else{
+                            inst.jw_length = 1;
+                        }
+                        if(!map.has(jg)){
+                            var arr = new Array();
+                            arr[jw] = inst;
+                            map.set(jg,arr);
+                        }else{
+                            var arr = map.get(jg);
+                            arr[jw] = inst;
+                            map.set(jg,arr);
+                        }
+                    }
+                }
+
+                var arrayOfkeys = new Array();
+                map.forEach(function (value, key, map) {
+                    arrayOfkeys.push(key);
+                });
+                arrayOfkeys = arrayOfkeys.sort();
+                draw2D(arrayOfkeys);
+                //alert("arrayOfkeys.length:"+arrayOfkeys.length)
+                arrayOfkeys.forEach(function (value) {
+                    var item = map.get(value);
+                    var array = new Array();
+                    item.forEach(function (inst,key) {
+                        var length = inst.jw_length;
+                        var bk_inst_name = inst.bk_inst_name;
+                        var jskj_htbh = inst.jskj_htbh;//合同编号
+                        var jskj_xlh = inst.jskj_xlh;//序列号
+                        var jskj_xh = inst.jskj_xh;//型号
+                        var jskj_jgjw = inst.jskj_jg + ',' + inst.jskj_jw;//机柜、机位
+                        var info = "合同编号："+jskj_htbh+'@序列号：'+jskj_xlh+'@型号：'+jskj_xh+'@位置：'+jskj_jgjw;
+                        array.push({index: key, name: bk_inst_name,info:info, length: length, type: 1});
+                    })
+                    init(value,46, array)
+                })
+            }
+        });
+    })
+
+    function draw2D(arrayOfkeys){
+        var count = 0;
+        var rowNum = 6;
+        var content = '';
+        arrayOfkeys.forEach(function (value) {
+            if (count == 0) {
+                content = '<table class="table">' + '<tbody><tr>';
+            }
+            if ((count + 1) / rowNum > 1 && (count + 1) % rowNum == 1) {
+                content = content + '<tr>';
+            }
+            content = content + '<td>';
+            content = content + '<div id="titleBlockOf' + value + '" class="titleBlock" align="center">' +
+                '<font color="white" style="font-weight: bold">' + value + '</font>' +
+                '</div>' +
+                '<div id="parentBlockOf' + value + '" class="parentBlock">' +
+                '<div id="innerContentBlockOf' + value + '" class="innerContentBlock">' +
+                '</div>' +
+                '</div>';
+            content = content + '</td>';
+
+            if ((count + 1) % rowNum == 0 && (count + 1) != arrayOfkeys.length) {
+                content = content + '</tr>';
+            }
+            if ((count + 1) == arrayOfkeys.length) {
+                content = content + '</tr></tbody> </table>';
+            }
+            count++;
+        })
+        $('#computer_room').append(content);
+    }
+
+	function isIntNum(val){
+		var regPos = /^[1-9]+[0-9]*]*$/;
+		if(regPos.test(val)){
+			return true;
+		}else{
+			return false;
+		}
+	}
+
+    function init(id,unitCount, unitArray) {
+        var blockInterval = 3;//单元的间隔
+        var blockHeight = 12;//单元高度
+        var map = {};
+        for (var i = 0; i < unitArray.length; i++) {
+            map[unitArray[i].index + unitArray[i].length - 1] = unitArray[i];
+        }
+        var parentBlockHeight = (blockHeight + blockInterval) * unitCount + 40+ 'px';
+        var idOfParentBlockOf = '#parentBlockOf'+id;
+        $(idOfParentBlockOf).css('height', parentBlockHeight);
+        var content = "";
+        for (var i = unitCount; i >= 1; i--) {
+            if (typeof(map[i]) == 'undefined') {
+               var height = blockHeight +  'px';
+               content += '<div class="areaBlock" align="center" style="height: ' + height + '" data-geo=""><div class="blockFont">' + i + '</div></div>'
+            } else {
+                var length = parseInt(map[i].length);
+				var name = map[i].name;
+				var info = map[i].info;
+                var height = blockHeight * (length) + blockInterval * (length - 1) + 'px';
+                var temp_i = i - (length - 1);
+                content += '<div class="areaBlock" align="center" style="height: ' + height + '" data-geo=""><div class="blockFont">' + name + '</div><div style="visibility:hidden">@@' +  info+ '</div></div>'
+                //content += '<div class="areaBlock" align="center" style="height: ' + height + '" data-geo=""><div class="blockFont">' + name + '</div></div>'
+				i = temp_i;
+            }
+
+        }
+        var innerContentBlockOf = '#innerContentBlockOf'+id;
+        $(innerContentBlockOf).append(content)
+    }
+</script>
+</%block>

@@ -75,10 +75,10 @@
                 }
 
                 var arrayOfkeys = new Array();
-                map.forEach(function (value, key, map) {
+                map.forEach(function (value, key) {
                     arrayOfkeys.push(key);
                 });
-                arrayOfkeys = arrayOfkeys.sort();
+                arrayOfkeys = sortArray(arrayOfkeys);
                 draw2D(arrayOfkeys);
                 //alert("arrayOfkeys.length:"+arrayOfkeys.length)
                 arrayOfkeys.forEach(function (value) {
@@ -86,13 +86,16 @@
                     var array = new Array();
                     item.forEach(function (inst,key) {
                         var length = inst.jw_length;
+                        var sbmc = inst.sbmc;
                         var bk_inst_name = inst.bk_inst_name;
                         var jskj_htbh = inst.jskj_htbh;//合同编号
-                        var jskj_xlh = inst.jskj_xlh;//序列号
+                        var jskj_xlh = inst.xlh;//序列号
                         var jskj_xh = inst.jskj_xh;//型号
-                        var jskj_jgjw = inst.jskj_jg + ',' + inst.jskj_jw;//机柜、机位
-                        var info = "合同编号："+jskj_htbh+'@序列号：'+jskj_xlh+'@型号：'+jskj_xh+'@位置：'+jskj_jgjw;
-                        array.push({index: key, name: bk_inst_name,info:info, length: length, type: 1});
+                        var sbip = inst.sbip;//设备ip
+                        var sbip_ilo = inst.sbip_ilo;//ilo ip
+                        var jskj_jgjw = inst.jg + ',' + inst.jw;//机柜、机位
+                        var info = "设备编号：" + bk_inst_name +"@管理ip："+sbip_ilo+"@设备ip："+sbip+'@序列号：'+jskj_xlh+'@型号：'+jskj_xh+'@位置：'+jskj_jgjw;
+                        array.push({index: key, name: sbmc,info:info, length: length, type: 1});
                     })
                     init(value,46, array)
                 })
@@ -140,6 +143,23 @@
 			return false;
 		}
 	}
+    function sortArray(array){
+        //一个新的对象
+        var obj = {};
+        //遍历当前数组
+        for(var i = 0; i < array.length; i++){
+            if (obj[array[i].slice(0,1)]){
+                obj[array[i].slice(0,1)].push(array[i])
+            }else {
+                obj[array[i].slice(0,1)] = new Array()
+                obj[array[i].slice(0,1)].push(array[i])
+            };
+        }
+        // 单个数组排序
+        var newArr = Object.keys(obj).sort().map((item)=>{return obj[item].sort((a,b)=>{return a.slice(1)-b.slice(1)})})
+        // 合并返回
+        return newArr.map((item)=>{return item.join(',')}).join(',').split(',')
+    }
 
     function init(id,unitCount, unitArray) {
         var blockInterval = 3;//单元的间隔

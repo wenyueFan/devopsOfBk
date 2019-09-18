@@ -95,11 +95,11 @@ def search_instFromBK(request):
     jfid = request.POST.get('jfid', '')
     client = get_client_by_request(request)
     kwargs = {"bk_supplier_account" :0,
-              "bk_obj_id" : "jskj_ele_eqmt",
+              "bk_obj_id" : "jskj_rpt_jf2d",
                 "condition":{
-                    "jskj_ele_eqmt":[
+                    "jskj_rpt_jf2d":[
                         {
-                            "field":"jskj_jfmc",
+                            "field":"jfmc",
                             "operator":"$eq",
                             "value":jfid
                         }

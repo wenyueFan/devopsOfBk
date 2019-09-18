@@ -51,9 +51,9 @@
                     var info = data.info;
                     for(var i = 0;i<info.length;i++){
                         var inst = info[i];
-                        var jg = inst.jskj_jg;
-                        var jw = inst.jskj_jw;
-                        if(jg == undefined || jw == undefined) continue;
+                        var jg = inst.jg;
+                        var jw = inst.jw;
+                        if(jg == undefined || jw == undefined || jg == '' || jw == '') continue;
                         //console.log(inst.bk_inst_name +'@'+ jg+'@'+jw);
                         if(!isIntNum(jw)){
                             var temp = jw.split('-');

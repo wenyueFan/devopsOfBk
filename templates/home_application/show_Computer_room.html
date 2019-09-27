@@ -1,9 +1,9 @@
 <%inherit file="/base.html"/>
 <%block name="content">
 <div>
-    机位上一�?显示设��名称，鼠标移到设��名称上，可显示设���?�细信息�?<br/>
-    当�?���名称为红色，表示电子�?���表里的服务器、网络安全�?���未关联到自动发现的服务器、网络安全�?���，系统使用资产名称替换设��名称显示，并标记为红色�?<br/>
-    当�?���名称为红色，需手工把电子�?���与服务器、网络安全�?���进行关联�?
+    机位上一般显示设备名称，鼠标移到设备名称上，可显示设备详细信息。<br/>
+    当设备名称为红色，表示电子设备表里的服务器、网络安全设备未关联到自动发现的服务器、网络安全设备，系统使用资产名称替换设备名称显示，并标记为红色。<br/>
+    当设备名称为红色，需手工把电子设备与服务器、网络安全设备进行关联。
 </div>
 <div class="container-fluid" id="computer_room"/>
 <link href="${STATIC_URL}css/computer_room_2d.css" rel="stylesheet">
@@ -42,6 +42,10 @@
             }
         });
         var jfid=GetQueryString("jfid");
+        if(jfid==null || jfid == 'undefined' || jfid == ''){
+            jfid = 2;
+        }
+
         $.ajax({
             url: "${SITE_URL}search_instFromBK/",
             type: 'POST',
@@ -49,6 +53,7 @@
             dataType: 'json',
             success: function(res){
             //获取数据成功
+                var heightOfJw = 46;
                 var map = new Map();
                 var result = res.result;
                 if (result.code == 0){
@@ -58,8 +63,10 @@
                         var inst = info[i];
                         var jg = inst.jg;
                         var jw = inst.jw;
+                        //剔除掉机柜、机位为空的数据
                         if(jg == undefined || jw == undefined || jg == '' || jw == '') continue;
                         //console.log(inst.bk_inst_name +'@'+ jg+'@'+jw);
+                        //占用多个机位的设备，机位格式为m-n，如1-2，计算出占用总长度
                         if(!isIntNum(jw)){
                             var temp = jw.split('-');
                             jw=temp[0];
@@ -67,6 +74,7 @@
                         }else{
                             inst.jw_length = 1;
                         }
+                        //把每个机柜放map里，map格式：key为机柜编号，value为该机柜下所有设备的数组
                         if(!map.has(jg)){
                             var arr = new Array();
                             arr[jw] = inst;
@@ -79,40 +87,68 @@
                     }
                 }
 
-                var arrayOfkeys = new Array();
+                //机位数组，把机位进行排序
+                var jwList = new Array();
                 map.forEach(function (value, key) {
-                    arrayOfkeys.push(key);
+                    jwList.push(key);
                 });
-                arrayOfkeys = sortArray(arrayOfkeys);
-                draw2D(arrayOfkeys);
-                //alert("arrayOfkeys.length:"+arrayOfkeys.length)
-                arrayOfkeys.forEach(function (value) {
-                    var item = map.get(value);
-                    var array = new Array();
-                    item.forEach(function (inst,key) {
+                jwList = sortArray(jwList);
+
+                //先画出所有机位、机柜图
+                drawJW2D(jwList);
+
+                jwList.forEach(function (jwName) {
+                    var instList = map.get(jwName);
+                    var dataList = new Array();
+                    instList.forEach(function (inst,key) {
                         var length = inst.jw_length;
                         var sbmc = inst.sbmc;
                         var bk_inst_name = inst.bk_inst_name;
-                        var jskj_htbh = inst.jskj_htbh;//合同编号
                         var jskj_xlh = inst.xlh;//序列号
                         var jskj_xh = inst.jskj_xh;//型号
                         var sbip = inst.sbip;//设备ip
                         var sbip_ilo = inst.sbip_ilo;//ilo ip
+                        var jskj_zclb = inst.jskj_zclb;
                         var jskj_jgjw = inst.jg + ',' + inst.jw;//机柜、机位
-                        var info = "设备编号：" + bk_inst_name +"@管理ip："+sbip_ilo+"@设备ip："+sbip+'@序列号：'+jskj_xlh+'@型号：'+jskj_xh+'@位置：'+jskj_jgjw;
-                        array.push({index: key, name: sbmc,info:info, length: length, type: 1});
+                        var info = "资产类型：" + getSblxCH(jskj_zclb);
+                        info = info + "@资产编号：" + bk_inst_name;
+                        //服务器、网络设备显示管理ip、设备ip
+                        if(jskj_zclb == '1' || jskj_zclb == '3' || jskj_zclb == '4' || jskj_zclb == '5'){
+                            if (sbip_ilo != null && sbip_ilo != undefined && sbip_ilo != '')
+                                info = info + "@管理ip："+sbip_ilo;
+                            if (sbip != null && sbip != undefined && sbip != '')
+                                info = info + "@设备ip："+sbip;
+                        }
+                        info = info + '@序列号：'+jskj_xlh+'@型号：'+jskj_xh+'@位置：'+jskj_jgjw;
+                        dataList.push({index: key, name: sbmc, zcmc : inst.jskj_zcmc , info : info, length: length, type: jskj_zclb});
                     })
-                    init(value,46, array)
+                    //把设备数据放在机位上
+                    appendData2JW(jwName,heightOfJw, dataList)
                 })
             }
         });
     })
-
-    function draw2D(arrayOfkeys){
+    function getSblxCH(jskj_zclb){
+        var sblxCH = "";
+        if(jskj_zclb == '1')
+            sblxCH = "服务器";
+        else if(jskj_zclb == '2')
+            sblxCH = "存储设备";
+        else if(jskj_zclb == '3')
+            sblxCH = "路由器";
+        else if(jskj_zclb == '4')
+            sblxCH = "交换机";
+        else if(jskj_zclb == '5')
+            sblxCH = "网络安全设备";
+        else if(jskj_zclb == '6')
+            sblxCH = "配件";
+        return sblxCH;
+    }
+    function drawJW2D(jwList){
         var count = 0;
         var rowNum = 6;
         var content = '';
-        arrayOfkeys.forEach(function (value) {
+        jwList.forEach(function (jwName) {
             if (count == 0) {
                 content = '<table class="table">' + '<tbody><tr>';
             }
@@ -120,19 +156,19 @@
                 content = content + '<tr>';
             }
             content = content + '<td>';
-            content = content + '<div id="titleBlockOf' + value + '" class="titleBlock" align="center">' +
-                '<font color="white" style="font-weight: bold">' + value + '</font>' +
+            content = content + '<div id="titleBlockOf' + jwName + '" class="titleBlock" align="center">' +
+                '<font color="white" style="font-weight: bold">' + jwName + '</font>' +
                 '</div>' +
-                '<div id="parentBlockOf' + value + '" class="parentBlock">' +
-                '<div id="innerContentBlockOf' + value + '" class="innerContentBlock">' +
+                '<div id="parentBlockOf' + jwName + '" class="parentBlock">' +
+                '<div id="innerContentBlockOf' + jwName + '" class="innerContentBlock">' +
                 '</div>' +
                 '</div>';
             content = content + '</td>';
 
-            if ((count + 1) % rowNum == 0 && (count + 1) != arrayOfkeys.length) {
+            if ((count + 1) % rowNum == 0 && (count + 1) != jwList.length) {
                 content = content + '</tr>';
             }
-            if ((count + 1) == arrayOfkeys.length) {
+            if ((count + 1) == jwList.length) {
                 content = content + '</tr></tbody> </table>';
             }
             count++;
@@ -148,6 +184,7 @@
 			return false;
 		}
 	}
+	
     function sortArray(array){
         //一个新的对象
         var obj = {};
@@ -166,15 +203,15 @@
         return newArr.map((item)=>{return item.join(',')}).join(',').split(',')
     }
 
-    function init(id,unitCount, unitArray) {
+    function appendData2JW(jwName,unitCount, dataList) {
         var blockInterval = 3;//单元的间隔
         var blockHeight = 12;//单元高度
         var map = {};
-        for (var i = 0; i < unitArray.length; i++) {
-            map[unitArray[i].index + unitArray[i].length - 1] = unitArray[i];
+        for (var i = 0; i < dataList.length; i++) {
+            map[dataList[i].index + dataList[i].length - 1] = dataList[i];
         }
         var parentBlockHeight = (blockHeight + blockInterval) * unitCount + 40+ 'px';
-        var idOfParentBlockOf = '#parentBlockOf'+id;
+        var idOfParentBlockOf = '#parentBlockOf'+jwName;
         $(idOfParentBlockOf).css('height', parentBlockHeight);
         var content = "";
         for (var i = unitCount; i >= 1; i--) {
@@ -183,17 +220,24 @@
                content += '<div class="areaBlock" align="center" style="height: ' + height + '" data-geo=""><div class="blockFont">' + i + '</div></div>'
             } else {
                 var length = parseInt(map[i].length);
+                //设备name为空，即未关联设备，设备名称使用资产名称代替，且在显示到前端时，如设备类型为服务器、网络安全设备，设备名称变红
 				var name = map[i].name;
+				var type = map[i].type;
+                if(name==null || name == 'undefined' || name == ''){
+                    if(type == '1' || type == '3' || type == '4' || type == '5')
+                        name = '<font color="red">'+ map[i].zcmc + '</font>';
+                    else
+                        name = map[i].zcmc;
+                }
 				var info = map[i].info;
                 var height = blockHeight * (length) + blockInterval * (length - 1) + 'px';
                 var temp_i = i - (length - 1);
                 content += '<div class="areaBlock" align="center" style="height: ' + height + '" data-geo=""><div class="blockFont">' + name + '</div><div style="visibility:hidden">@@' +  info+ '</div></div>'
-                //content += '<div class="areaBlock" align="center" style="height: ' + height + '" data-geo=""><div class="blockFont">' + name + '</div></div>'
 				i = temp_i;
             }
 
         }
-        var innerContentBlockOf = '#innerContentBlockOf'+id;
+        var innerContentBlockOf = '#innerContentBlockOf'+jwName;
         $(innerContentBlockOf).append(content)
     }
 </script>

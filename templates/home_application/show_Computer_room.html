@@ -202,6 +202,7 @@
         var keyWord = document.getElementById("keyword").value;
         var allPs = document.getElementsByTagName("p");
         length = allPs.length;
+        var isExistFLag = false;
         for(var i=0;i<length;i++){
             var p = allPs[i];
             var innerHTML = p.innerHTML;
@@ -212,8 +213,11 @@
                 var childNodes = parentNode.childNodes;
                 childNodes[0].innerHTML = '<span id="jfSpan" style="color:#0f0">'+childNodes[0].innerHTML+'</span>';
                 //break;
+                isExistFLag = true;
             }
         }
+        if(!isExistFLag)
+            alert('未查询到相关数据。');
     }
 	function isIntNum(val){
 		var regPos = /^[1-9]+[0-9]*]*$/;

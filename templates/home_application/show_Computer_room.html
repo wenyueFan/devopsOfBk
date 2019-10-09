@@ -5,6 +5,8 @@
     当设备名称为红色，表示电子设备表里的服务器、网络安全设备未关联到自动发现的服务器、网络安全设备，系统使用资产名称替换设备名称显示，并标记为红色。<br/>
     当设备名称为红色，需手工把电子设备与服务器、网络安全设备进行关联。
 </div>
+<input id="keyword" type="text" value="请输入关键字查找" onFocus="if(value==defaultValue){value='';this.style.color='#000'}" onBlur="if(!value){value=defaultValue;this.style.color='#999'}" style ="#999;"/>
+<button id="search-button" onclick="findByKeyWord()">搜索</button>
 <div class="container-fluid" id="computer_room"/>
 <link href="${STATIC_URL}css/computer_room_2d.css" rel="stylesheet">
 <link href="${STATIC_URL}css/jquery-ui.min.css" rel="stylesheet">
@@ -110,7 +112,8 @@
                         var sbip_ilo = inst.sbip_ilo;//ilo ip
                         var jskj_zclb = inst.jskj_zclb;
                         var jskj_jgjw = inst.jg + ',' + inst.jw;//机柜、机位
-                        var info = "资产类型：" + getSblxCH(jskj_zclb);
+                        var info = "设备名称：" + sbmc;
+                        info = info + "@资产类型：" + getSblxCH(jskj_zclb);
                         info = info + "@资产编号：" + bk_inst_name;
                         //服务器、网络设备显示管理ip、设备ip
                         if(jskj_zclb == '1' || jskj_zclb == '3' || jskj_zclb == '4' || jskj_zclb == '5'){
@@ -176,6 +179,42 @@
         $('#computer_room').append(content);
     }
 
+    function removeAllSpan(){
+        var allSpans = document.getElementsByTagName("span");
+        var length = allSpans.length;
+        if(length >0){
+            for(var i=length-1;i>=0;i--){
+                var span = allSpans[i];
+                if(typeof(span) == 'undefined' || span == null) continue;
+                if(span.id !='jfSpan') continue;
+                var parentNode = span.parentNode;
+                var childList = parentNode.childNodes;
+                for(var j=0;j<childList.length;j++){
+                    parentNode.removeChild(childList[j]);
+                }
+                parentNode.innerHTML = span.innerHTML;
+            }
+        }
+    }
+    function findByKeyWord(){
+        removeAllSpan();
+
+        var keyWord = document.getElementById("keyword").value;
+        var allPs = document.getElementsByTagName("p");
+        length = allPs.length;
+        for(var i=0;i<length;i++){
+            var p = allPs[i];
+            var innerHTML = p.innerHTML;
+            var index = innerHTML.indexOf(keyWord);
+            if(index>0){
+                var parentNode = p.parentNode;
+                window.location.hash = "#"+parentNode.id;
+                var childNodes = parentNode.childNodes;
+                childNodes[0].innerHTML = '<span id="jfSpan" style="color:#0f0">'+childNodes[0].innerHTML+'</span>';
+                //break;
+            }
+        }
+    }
 	function isIntNum(val){
 		var regPos = /^[1-9]+[0-9]*]*$/;
 		if(regPos.test(val)){
@@ -184,7 +223,7 @@
 			return false;
 		}
 	}
-	
+
     function sortArray(array){
         //一个新的对象
         var obj = {};
@@ -217,7 +256,8 @@
         for (var i = unitCount; i >= 1; i--) {
             if (typeof(map[i]) == 'undefined') {
                var height = blockHeight +  'px';
-               content += '<div class="areaBlock" align="center" style="height: ' + height + '" data-geo=""><div class="blockFont">' + i + '</div></div>'
+               content += '<div id="'+jwName+i+'"  class="areaBlock" align="center" style="height: ' + height + '" data-geo=""><div class="blockFont">' + i + '</div></div>'
+               //content += '<div class="areaBlock" align="center" style="height: ' + height + '" data-geo=""><div class="blockFont">' + i + '</div></div>'
             } else {
                 var length = parseInt(map[i].length);
                 //设备name为空，即未关联设备，设备名称使用资产名称代替，且在显示到前端时，如设备类型为服务器、网络安全设备，设备名称变红
@@ -232,7 +272,8 @@
 				var info = map[i].info;
                 var height = blockHeight * (length) + blockInterval * (length - 1) + 'px';
                 var temp_i = i - (length - 1);
-                content += '<div class="areaBlock" align="center" style="height: ' + height + '" data-geo=""><div class="blockFont">' + name + '</div><div style="visibility:hidden">@@' +  info+ '</div></div>'
+                content += '<div  id="'+jwName+i+'"  class="areaBlock" align="center" style="height: ' + height + '" data-geo=""><div class="blockFont">' + name + '</div><p style="visibility:hidden">@@' +  info+ '</p></div>'
+                //content += '<div class="areaBlock" align="center" style="height: ' + height + '" data-geo=""><div class="blockFont">' + name + '</div><div style="visibility:hidden">@@' +  info+ '</div></div>'
 				i = temp_i;
             }
 

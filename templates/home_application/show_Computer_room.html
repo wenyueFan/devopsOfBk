@@ -7,6 +7,7 @@
 </div>
 <input id="keyword" type="text" value="请输入关键字查找" onFocus="if(value==defaultValue){value='';this.style.color='#000'}" onBlur="if(!value){value=defaultValue;this.style.color='#999'}" style ="#999;"/>
 <button id="search-button" onclick="findByKeyWord()">搜索</button>
+<button id="search-button" onclick="updateData()">更新</button>
 <div class="container-fluid" id="computer_room"/>
 <link href="${STATIC_URL}css/computer_room_2d.css" rel="stylesheet">
 <link href="${STATIC_URL}css/jquery-ui.min.css" rel="stylesheet">
@@ -195,6 +196,18 @@
                 parentNode.innerHTML = span.innerHTML;
             }
         }
+    }
+
+    function updateData(){
+        $.post('${SITE_URL}updateJf2dRptData/', {}, function(data){
+                    if(data.result){
+                        alert("更新成功。")
+                        //findByKeyWord();
+                    }else{
+                        alert(data.message)
+                    }
+                }, 'json')
+
     }
     function findByKeyWord(){
         removeAllSpan();

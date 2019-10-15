@@ -87,6 +87,18 @@ def save_DbExchangeLog(request):
         result = {'result': resp.get('result'), 'data': data}
     return render_json(result)
 
+def updateJf2dRptData(request):
+    """
+    调用作业平台执行更新机房展示数据
+    """
+    client = get_client_by_request(request)
+    kwargs = {'bk_biz_id': "7","bk_job_id": "29"}
+    resp = client.job.execute_job(**kwargs)
+
+    if resp.get('result'):
+        data = resp.get('data', [])
+        result = {'result': resp.get('result'), 'data': data}
+    return render_json(result)
 
 def search_instFromBK(request):
     """

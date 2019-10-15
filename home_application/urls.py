@@ -20,5 +20,6 @@ urlpatterns = patterns(
     (r'^save_DbExchangeLog/$', 'save_DbExchangeLog'),
     (r'^search_instFromBK/$', 'search_instFromBK'),
     (r'^showComputerRoom/$', 'showComputerRoom'),
+    (r'^updateJf2dRptData/$', 'updateJf2dRptData'),
 
 )

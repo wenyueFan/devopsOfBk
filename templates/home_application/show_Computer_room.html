@@ -201,7 +201,8 @@
     function updateData(){
         $.post('${SITE_URL}updateJf2dRptData/', {}, function(data){
                     if(data.result){
-                        alert("更新成功。")
+                        alert("更新成功。");
+                        window.location.reload();
                         //findByKeyWord();
                     }else{
                         alert(data.message)

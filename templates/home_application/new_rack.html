@@ -1,0 +1,72 @@
+<%inherit file="/base.html"/>
+<%block name="content">
+<div class="king-content-wrap">
+    <div class="king-layout1-content" style="margin-left: 216px;">
+
+    <div class="king-page-box">
+        <div class="king-container clearfix">
+            <div class="panel panel-default mb0">
+                <div class="panel-heading"> 新增机位 </div>
+                <div class="panel-body">
+                    <form class="form-horizontal">
+                        <div class="form-group clearfix ">
+                            <label class="col-sm-3 control-label bk-lh30 pt0">机柜名称：</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control bk-valign-top" id="name" placeholder="机柜名称"> </div>
+                        </div>
+                        <div class="form-group clearfix ">
+                            <label class="col-sm-3 control-label bk-lh30 pt0">机柜高度：</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control bk-valign-top" id="height" placeholder="机柜高度"> </div>
+                        </div>
+                        <div class="form-group clearfix ">
+                            <label class="col-sm-3 control-label bk-lh30 pt0">所在行：</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control bk-valign-top" id="row_num" placeholder="所在行"> </div>
+                        </div>
+                        <div class="form-group clearfix ">
+                            <label class="col-sm-3 control-label bk-lh30 pt0">所在列：</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control bk-valign-top" id="column_num" placeholder="所在列"> </div>
+                        </div>
+                        <div class="form-group clearfix ">
+                            <label class="col-sm-3 control-label bk-lh30 pt0">所在机房：</label>
+                            <div class="col-sm-9">
+                                <select name="" id="machine_room" class="form-control bk-valign-top">
+                                    <option value="2">南昌电信证券机房8F</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group clearfix">
+                            <div class="col-sm-9 col-sm-offset-3">
+                                <button type="button" class="king-btn mr10  king-success" onclick="save(this)">提交</button>
+                                <button type="button" class="king-btn king-default ">取消</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+</div>
+<script type="application/javascript">
+    function save(obj){
+        var name = $('#name').val();
+        var height = $('#height').val();
+        var row_num = $('#row_num').val();
+        var column_num = $('#column_num').val();
+        var machine_room = $('#machine_room').val();
+        $.post('${SITE_URL}save_Rack/', {'name': name, 'height': height, 'row_num': row_num, 'row_num': row_num, 'column_num': column_num, 'machine_room': machine_room}, function(data){
+            if(data.result){
+                alert("保存成功。")
+                window.location.href="${SITE_URL}link2RackManageUrl";
+            }else{
+                alert(data.message)
+            }
+        }, 'json')
+        return
+    }
+
+</script>
+</%block>

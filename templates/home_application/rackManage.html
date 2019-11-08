@@ -1,0 +1,126 @@
+<%inherit file="/base.html"/>
+<%block name="content">
+        <!-- Page Heading -->
+        <div class="row page-header-box">
+            <div class="col-lg-12">
+                <h1 id="page_header" class="page-header">
+                    <div id="page_header">机位管理</div>
+                </h1>
+            </div>
+        </div>
+
+        <!-- content start -->
+        <div class="king-content-wrap">
+            <div class="king-layout1-content" style="margin-left: 20px;">
+                <button class="king-btn-demo king-btn king-success"  title="新增" onclick="newPage()">
+                    <i class="fa fa-cog btn-icon"></i>新增
+                </button>
+              <div class="king-block king-block-bordered">
+                <div class="king-block-header king-gray-light">
+                    <h3 class="king-block-title">机位列表</h3>
+                </div>
+                <div class="king-block-content">
+                  <table id="rackList" class="table table-bordered table-striped">
+                    <thead>
+                      <tr>
+                        <th class="p15" style="width:20%;">机位名称</th>
+                        <th style="width:10%;">高度(U)</th>
+                        <th style="width:10%;">所在行</th>
+                        <th style="width:10%;">所在列</th>
+                        <th style="width:20%;">所在机房</th>
+                        <th style="width:10%;">操作</th>
+                      </tr>
+                    </thead>
+                  </table>
+                </div>
+              </div>
+            </div>
+        </div>
+        <!-- content end -->
+<script type="text/javascript">
+    //表格(DataTables)-4，综合示例
+    var language = {
+      search: '搜索：',
+      lengthMenu: "每页显示 _MENU_ 记录",
+      zeroRecords: "没找到相应的数据！",
+      info: "分页 _PAGE_ / _PAGES_",
+      infoEmpty: "暂无数据！",
+      infoFiltered: "(从 _MAX_ 条数据中搜索)",
+      paginate: {
+        first: '首页',
+        last: '尾页',
+        previous: '上一页',
+        next: '下一页',
+      }
+    }
+    $.ajax({
+        url: '${SITE_URL}getRackList',
+        type: 'GET',
+        dataType: 'json',
+        success: function(res){
+        //获取数据成功
+            var list;
+            if (res.code == 0) {
+                list = res.data;
+                transferJfmc(list);
+            }
+            $("#rackList").dataTable({
+                autoWidth: false,
+                lengthChange: true, //不允许用户改变表格每页显示的记录数
+                pageLength : 10, //每页显示几条数据
+                lengthMenu: [5, 10, 20], //每页显示选项
+                pagingType: 'full_numbers',
+                data:list,
+                ordering: false,
+                columns : [
+                  {data:"name"},
+                  {data:"height"},
+                  {data:"row_num"},
+                  {data:"column_num"},
+                  {data:"machine_room"},
+                  {
+                    data:null,
+                    orderable:false,
+                    render : function(data, type, row, meta){
+                        return '<a class="king-btn king-default del">删除</a>';
+                    }
+                  }
+                ],
+                language:language
+            });
+
+            var t = $("#rackList").DataTable();//获取datatables对象
+            //删除按钮绑定事件
+            $("#rackList tbody").on('click', 'a.del', function(){
+                var row = t.row( $(this).parents('tr') ),//获取按钮所在的行
+                  data = row.data();
+                if(confirm('确定要删除'+data.name+' ?')){
+                    $.post('${SITE_URL}deleteRack/', {'rackName': data.name}, function(data){
+                        if(data.result){
+                            row.remove().draw();
+                        }else{
+                            alert(data.message)
+                        }
+                    }, 'json')
+
+                }
+
+            });
+        }
+    });
+
+    function transferJfmc(list){
+        if(list == null) ruturn;
+        for(var i=0;i<list.length;i++){
+            var machine_room = list[i].machine_room;
+            if(machine_room=='2'){
+                machine_room='南昌电信证券机房8F';
+                list[i].machine_room=machine_room;
+            }
+        }
+    }
+    function newPage() {
+        window.location.href="${SITE_URL}newRack"
+    }
+</script>
+</%block>

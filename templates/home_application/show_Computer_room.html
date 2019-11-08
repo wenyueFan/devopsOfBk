@@ -1,5 +1,14 @@
 <%inherit file="/base.html"/>
 <%block name="content">
+<!-- Page Heading -->
+<div class="row page-header-box">
+    <div class="col-lg-12">
+        <h1 id="page_header" class="page-header">
+            <div id="page_header"></div>
+        </h1>
+    </div>
+</div>
+
 <div>
     机位上一般显示设备名称，鼠标移到设备名称上，可显示设备详细信息。<br/>
     当设备名称为红色，表示电子设备表里的服务器、网络安全设备未关联到自动发现的服务器、网络安全设备，系统使用资产名称替换设备名称显示，并标记为红色。<br/>
@@ -10,7 +19,6 @@
 <button id="search-button" onclick="updateData()">更新</button>
 <div class="container-fluid" id="computer_room"/>
 <link href="${STATIC_URL}css/computer_room_2d.css" rel="stylesheet">
-<link href="${STATIC_URL}css/jquery-ui.min.css" rel="stylesheet">
 <script>
     function GetQueryString(name) {
         var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i");
@@ -18,13 +26,64 @@
         if(r != null) return decodeURI(r[2]);
         return null;
     }
+
+    function GetJfid(){
+        var jfid=GetQueryString("jfid");
+        if(jfid==null || jfid == 'undefined' || jfid == ''){
+            jfid = 2;
+        }
+        return jfid;
+    }
+
+    function SetJfName(jfid){
+        var jf_name = '';
+        if(jfid == 2)
+            jf_name='南昌电信证券机房8F';
+        $('#page_header').html(jf_name);
+    }
+
+    //把每个机柜放map里，map格式：key为机柜编号，value为该机柜下所有设备的数组
+    function getJGMap(res){
+        var jgMap = new Map();
+        var result = res.result;
+        if (result.code == 0){
+            var data = result.data;
+            var info = data.info;
+            for(var i = 0;i<info.length;i++){
+                var inst = info[i];
+                var jg = inst.jg;
+                var jw = inst.jw;
+                //剔除掉机柜、机位为空的数据
+                if(jg == undefined || jw == undefined || jg == '' || jw == '') continue;
+                //console.log(inst.bk_inst_name +'@'+ jg+'@'+jw);
+                //占用多个机位的设备，机位格式为m-n，如1-2，计算出占用总长度
+                if(!isIntNum(jw)){
+                    var temp = jw.split('-');
+                    jw=temp[0];
+                    inst.jw_length = temp[1] - temp[0] + 1;
+                }else{
+                    inst.jw_length = 1;
+                }
+                if(!jgMap.has(jg)){
+                    var arr = new Array();
+                    arr[jw] = inst;
+                    jgMap.set(jg,arr);
+                }else{
+                    var arr = jgMap.get(jg);
+                    arr[jw] = inst;
+                    jgMap.set(jg,arr);
+                }
+            }
+        }
+        return jgMap;
+    }
+
     $(function () {
         $(document).tooltip({
             position: { my: "left+50 center", at: "right center" },
             items: "[data-geo]",
             content: function() {
                 var element = $( this );
-                console.log(element.is( "[data-geo]" ));
                 if ( element.is( "[data-geo]" ) ) {
                     var text = element.text();
                     var content = '';
@@ -41,13 +100,11 @@
 					}
                     return content;
                 }
-
             }
         });
-        var jfid=GetQueryString("jfid");
-        if(jfid==null || jfid == 'undefined' || jfid == ''){
-            jfid = 2;
-        }
+        var jfid= GetJfid();
+
+        SetJfName(jfid);
 
         $.ajax({
             url: "${SITE_URL}search_instFromBK/",
@@ -57,81 +114,90 @@
             success: function(res){
             //获取数据成功
                 var heightOfJw = 46;
-                var map = new Map();
-                var result = res.result;
-                if (result.code == 0){
-                    var data = result.data;
-                    var info = data.info;
-                    for(var i = 0;i<info.length;i++){
-                        var inst = info[i];
-                        var jg = inst.jg;
-                        var jw = inst.jw;
-                        //剔除掉机柜、机位为空的数据
-                        if(jg == undefined || jw == undefined || jg == '' || jw == '') continue;
-                        //console.log(inst.bk_inst_name +'@'+ jg+'@'+jw);
-                        //占用多个机位的设备，机位格式为m-n，如1-2，计算出占用总长度
-                        if(!isIntNum(jw)){
-                            var temp = jw.split('-');
-                            jw=temp[0];
-                            inst.jw_length = temp[1] - temp[0] + 1;
-                        }else{
-                            inst.jw_length = 1;
-                        }
-                        //把每个机柜放map里，map格式：key为机柜编号，value为该机柜下所有设备的数组
-                        if(!map.has(jg)){
-                            var arr = new Array();
-                            arr[jw] = inst;
-                            map.set(jg,arr);
-                        }else{
-                            var arr = map.get(jg);
-                            arr[jw] = inst;
-                            map.set(jg,arr);
-                        }
-                    }
-                }
+                var jgMap = getJGMap(res);
 
-                //机位数组，把机位进行排序
                 var jwList = new Array();
-                map.forEach(function (value, key) {
-                    jwList.push(key);
-                });
-                jwList = sortArray(jwList);
 
                 //先画出所有机位、机柜图
-                drawJW2D(jwList);
+                //TODO 待实现 rowCount、columnCount从机房表获取
+                var rowCount = 3;
+                var columnCount = 12;
+                var content = '';
+                $.ajaxSettings.async = false;
+                for(var i=1;i<=rowCount;i++){
+                    $.post('${SITE_URL}getRackByRowNum/', {'rowNum': i}, function(data){
+                        if (i == 1) content = '<table class="table">' + '<tbody>';
+                        content = content + '<tr>';
+                        if(!data.result) return true;
+                        var rackList = data.data;
+                        for (var j = 1; j <= columnCount; j++) {
+                            content = content + '<td>';
+                            for(var k=0;k<rackList.length;k++) {
+                                var rack = rackList[k];
+                                if(rack == null || rack == undefined) continue;
+                                if (j == rack.column_num) {
+                                    var jwName = rack.name;
+                                    jwList.push(jwName);
+                                    content = content + '<div id="titleBlockOf' + jwName + '" class="titleBlock" align="center">' +
+                                        '<font color="white" style="font-weight: bold">' + jwName + '</font>' +
+                                        '</div>' +
+                                        '<div id="parentBlockOf' + jwName + '" class="parentBlock">' +
+                                        '<div id="innerContentBlockOf' + jwName + '" class="innerContentBlock">' +
+                                        '</div>' +
+                                        '</div>';
+                                    break;
+                                }
+                            }
+                            content = content + '</td>';
+                        }
+                        content = content + '</tr>';
+                        if (i == rowCount) {
+                            content = content + '</tbody> </table>';
+                            $('#computer_room').append(content);
+                        }
+                    }, 'json')
+                }
+                $.ajaxSettings.async = true;
 
                 jwList.forEach(function (jwName) {
-                    var instList = map.get(jwName);
-                    var dataList = new Array();
-                    instList.forEach(function (inst,key) {
-                        var length = inst.jw_length;
-                        var sbmc = inst.sbmc;
-                        var bk_inst_name = inst.bk_inst_name;
-                        var jskj_xlh = inst.xlh;//序列号
-                        var jskj_xh = inst.jskj_xh;//型号
-                        var sbip = inst.sbip;//设备ip
-                        var sbip_ilo = inst.sbip_ilo;//ilo ip
-                        var jskj_zclb = inst.jskj_zclb;
-                        var jskj_jgjw = inst.jg + ',' + inst.jw;//机柜、机位
-                        var info = "设备名称：" + sbmc;
-                        info = info + "@资产类型：" + getSblxCH(jskj_zclb);
-                        info = info + "@资产编号：" + bk_inst_name;
-                        //服务器、网络设备显示管理ip、设备ip
-                        if(jskj_zclb == '1' || jskj_zclb == '3' || jskj_zclb == '4' || jskj_zclb == '5'){
-                            if (sbip_ilo != null && sbip_ilo != undefined && sbip_ilo != '')
-                                info = info + "@管理ip："+sbip_ilo;
-                            if (sbip != null && sbip != undefined && sbip != '')
-                                info = info + "@设备ip："+sbip;
-                        }
-                        info = info + '@序列号：'+jskj_xlh+'@型号：'+jskj_xh+'@位置：'+jskj_jgjw;
-                        dataList.push({index: key, name: sbmc, zcmc : inst.jskj_zcmc , info : info, length: length, type: jskj_zclb});
-                    })
+                    var instList = jgMap.get(jwName);
+                    var dataList = buildJGDataByBKData(instList);
                     //把设备数据放在机位上
                     appendData2JW(jwName,heightOfJw, dataList)
                 })
             }
         });
     })
+
+    function buildJGDataByBKData(instList) {
+        var dataList = new Array();
+        if(instList != null && instList != undefined){
+            instList.forEach(function (inst,key) {
+                var length = inst.jw_length;
+                var sbmc = inst.sbmc;
+                var bk_inst_name = inst.bk_inst_name;
+                var jskj_xlh = inst.xlh;//序列号
+                var jskj_xh = inst.jskj_xh;//型号
+                var sbip = inst.sbip;//设备ip
+                var sbip_ilo = inst.sbip_ilo;//ilo ip
+                var jskj_zclb = inst.jskj_zclb;
+                var jskj_jgjw = inst.jg + ',' + inst.jw;//机柜、机位
+                var info = "设备名称：" + sbmc;
+                info = info + "@资产类型：" + getSblxCH(jskj_zclb);
+                info = info + "@资产编号：" + bk_inst_name;
+                //服务器、网络设备显示管理ip、设备ip
+                if(jskj_zclb == '1' || jskj_zclb == '3' || jskj_zclb == '4' || jskj_zclb == '5'){
+                    if (sbip_ilo != null && sbip_ilo != undefined && sbip_ilo != '')
+                        info = info + "@管理ip："+sbip_ilo;
+                    if (sbip != null && sbip != undefined && sbip != '')
+                        info = info + "@设备ip："+sbip;
+                }
+                info = info + '@序列号：'+jskj_xlh+'@型号：'+jskj_xh+'@位置：'+jskj_jgjw;
+                dataList.push({index: key, name: sbmc, zcmc : inst.jskj_zcmc , info : info, length: length, type: jskj_zclb});
+            })
+        }
+        return dataList;
+    }
     function getSblxCH(jskj_zclb){
         var sblxCH = "";
         if(jskj_zclb == '1')
@@ -150,7 +216,7 @@
     }
     function drawJW2D(jwList){
         var count = 0;
-        var rowNum = 6;
+        var rowNum = 12; //后续从机房表获取到
         var content = '';
         jwList.forEach(function (jwName) {
             if (count == 0) {
@@ -274,7 +340,7 @@
         for (var i = unitCount; i >= 1; i--) {
             if (typeof(map[i]) == 'undefined') {
                var height = blockHeight +  'px';
-               content += '<div id="'+jwName+i+'"  class="areaBlock" align="center" style="height: ' + height + '" data-geo=""><div class="blockFont">' + i + '</div></div>'
+               content += '<div id="'+jwName+i+'"  class="areaBlockWithBlank" align="center" style="height: ' + height + '" data-geo=""><div class="blockFont">' + i + '</div></div>'
                //content += '<div class="areaBlock" align="center" style="height: ' + height + '" data-geo=""><div class="blockFont">' + i + '</div></div>'
             } else {
                 var length = parseInt(map[i].length);

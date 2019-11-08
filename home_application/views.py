@@ -10,8 +10,10 @@ See the License for the specific language governing permissions and limitations 
 """
 
 from models import dbExchangeLog
+from models import Rack
 from common.mymako import render_mako_context, render_json
 from blueking.component.shortcuts import get_client_by_request
+
 def home(request):
     """
     首页
@@ -127,3 +129,79 @@ def showComputerRoom(request):
     首页
     """
     return render_mako_context(request, '/home_application/show_Computer_room.html')
+
+def link2RackManageUrl(request):
+    """
+    机位管理
+    """
+    return render_mako_context(request, '/home_application/rackManage.html')
+
+def getRackList(request):
+    record_list = Rack.objects.all().order_by('-id')
+    data = []
+    for index, record in enumerate(record_list):
+        data.append({
+            'index': index,
+            'id': record.id,
+            'name': record.name,
+            'height': record.height,
+            'row_num': record.row_num,
+            'column_num': record.column_num,
+            'machine_room': record.machine_room,
+        })
+    return render_json({'code': 0, 'message': 'success', 'data': data})
+
+def save_Rack(request):
+    name = request.POST.get('name', '')
+    height = request.POST.get('height', '')
+    row_num = request.POST.get('row_num', '')
+    column_num = request.POST.get('column_num', '')
+    machine_room = request.POST.get('machine_room', '')
+    operator = request.user.username
+    data = {"name": name,
+            "height": height,
+            "row_num": row_num,
+            "column_num": column_num,
+            "machine_room": machine_room,
+            "operator": operator}
+    result = Rack.objects.save_record(data)
+    return render_json(result)
+
+def newRack(request):
+    """
+    进入新建机位界面
+    """
+    return render_mako_context(request, '/home_application/new_rack.html')
+
+def deleteRack(request):
+    """
+    删除机柜
+    """
+    rackName = request.POST.get("rackName", '')
+    try:
+        Rack.objects.filter(name = rackName).delete()
+        result = {'result': True, 'message': u"删除成功"}
+    except Exception, e:
+        result = {'result': False, 'message': u"删除失败, %s" % e}
+    return render_json(result)
+
+def getRackByRowNum(request):
+    """
+    根据所在行拿到机柜,并升序排列
+    """
+    rowNum = request.POST.get("rowNum", '')
+    try:
+        data = Rack.objects.filter(row_num = rowNum).order_by('column_num')
+
+        tempdata = []
+        for index, record in enumerate(data):
+            tempdata.append({
+                'name': record.name,
+                'height': record.height,
+                'row_num': record.row_num,
+                'column_num': record.column_num,
+            })
+        result = {'result': True, 'message': u"获取成功", 'data': tempdata}
+    except Exception, e:
+        result = {'result': False, 'message': u"获取失败, %s" % e}
+    return render_json(result)

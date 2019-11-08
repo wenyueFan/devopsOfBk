@@ -16,30 +16,26 @@
         .innerContentBlock {
             width: 100%;
             height: 100%;
-            background-color: dimgrey
+            background-color: #999
         }
 
+        .areaBlockWithBlank {
+            width: 160px;
+            height: 12px;
+            margin: 0 auto;
+            margin-top: 3px;
+            background-color: black;
+            text-align: center;
+        }
         .areaBlock {
-            width: 180px;
+            width: 160px;
             height: 12px;
             margin: 0 auto;
             margin-top: 3px;
-            background-color: black;
+            background-color: #777;
             text-align: center;
         }
 
-        .areaBlockWithImg {
-            width: 180px;
-            height: 12px;
-            margin: 0 auto;
-            margin-top: 3px;
-            background-color: black;
-            text-align: center;
-            #background-image: url(switch.png);
-            #background-size: 100% 100%;
-            #-moz-background-size: 100% 100%;
-            #color: transparent;
-        }
 
         .blockFont {
             line-height: 12px;

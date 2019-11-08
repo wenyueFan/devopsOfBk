@@ -48,3 +48,42 @@ class dbExchangeLog(models.Model):
     class Meta:
         verbose_name = u"数据库切换记录"
         verbose_name_plural = u"数据库切换记录"
+
+class RackManager(models.Manager):
+    def save_record(self, data):
+        """
+        保存机柜记录
+        """
+        try:
+            Rack.objects.create(
+                name=data.get('name'),
+                height=data.get('height'),
+                row_num=data.get('row_num'),
+                column_num=data.get('column_num'),
+                machine_room=data.get('machine_room'),
+                operator=data.get('operator')
+            )
+            result = {'result': True, 'message': u"保存成功"}
+        except Exception, e:
+            result = {'result': False, 'message': u"保存失败, %s" % e}
+        return result
+
+class Rack(models.Model):
+    """
+    机柜
+    """
+    name = models.CharField(u"机柜名称", max_length=15,unique=True)
+    height = models.CharField(u"机柜高度", max_length=2)
+    row_num = models.CharField(u"所在行", max_length=2)
+    column_num = models.CharField(u"所在列", max_length=2)
+    machine_room = models.CharField(u"所在机房", max_length=2)
+    create_time = models.DateTimeField(u"创建时间", default=datetime.datetime.now())
+    operator = models.CharField(u"记录人", max_length=64)
+
+    def __unicode__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = u"机柜"
+        verbose_name_plural = u"机柜"
+

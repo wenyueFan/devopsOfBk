@@ -21,5 +21,11 @@ urlpatterns = patterns(
     (r'^search_instFromBK/$', 'search_instFromBK'),
     (r'^showComputerRoom/$', 'showComputerRoom'),
     (r'^updateJf2dRptData/$', 'updateJf2dRptData'),
+    (r'^link2RackManageUrl/$', 'link2RackManageUrl'),
+    (r'^getRackList/$', 'getRackList'),
+    (r'^newRack/$', 'newRack'),
+    (r'^save_Rack/$', 'save_Rack'),
+    (r'^deleteRack/$', 'deleteRack'),
+    (r'^getRackByRowNum/$', 'getRackByRowNum'),
 
 )

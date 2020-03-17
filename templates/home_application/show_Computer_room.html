@@ -105,7 +105,6 @@
         var jfid= GetJfid();
 
         SetJfName(jfid);
-
         $.ajax({
             url: "${SITE_URL}search_instFromBK/",
             type: 'POST',
@@ -113,7 +112,7 @@
             dataType: 'json',
             success: function(res){
             //获取数据成功
-                var heightOfJw = 46;
+               var heightOfJw = 46;
                 var jgMap = getJGMap(res);
 
                 var jwList = new Array();
@@ -125,14 +124,16 @@
                 var content = '';
                 $.ajaxSettings.async = false;
                 for(var i=1;i<=rowCount;i++){
-                    $.post('${SITE_URL}getRackByRowNum/', {'rowNum': i}, function(data){
+                   $.post('${SITE_URL}getRackByRowNum/', {'rowNum': i}, function(data){
                         if (i == 1) content = '<table class="table">' + '<tbody>';
                         content = content + '<tr>';
                         if(!data.result) return true;
                         var rackList = data.data;
+                        var count =0;
                         for (var j = 1; j <= columnCount; j++) {
                             content = content + '<td>';
                             for(var k=0;k<rackList.length;k++) {
+                                count++;
                                 var rack = rackList[k];
                                 if(rack == null || rack == undefined) continue;
                                 if (j == rack.column_num) {
@@ -145,6 +146,7 @@
                                         '<div id="innerContentBlockOf' + jwName + '" class="innerContentBlock">' +
                                         '</div>' +
                                         '</div>';
+                                    rackList.splice(k,1);
                                     break;
                                 }
                             }
@@ -156,7 +158,7 @@
                             $('#computer_room').append(content);
                         }
                     }, 'json')
-                }
+               }
                 $.ajaxSettings.async = true;
 
                 jwList.forEach(function (jwName) {
@@ -201,7 +203,7 @@
     function getSblxCH(jskj_zclb){
         var sblxCH = "";
         if(jskj_zclb == '1')
-            sblxCH = "服务器";
+            sblxCH = "主机设备";
         else if(jskj_zclb == '2')
             sblxCH = "存储设备";
         else if(jskj_zclb == '3')
@@ -209,9 +211,15 @@
         else if(jskj_zclb == '4')
             sblxCH = "交换机";
         else if(jskj_zclb == '5')
-            sblxCH = "网络安全设备";
+            sblxCH = "网络设备";
         else if(jskj_zclb == '6')
             sblxCH = "配件";
+        else if(jskj_zclb == '7')
+            sblxCH = "桌面设备";
+        else if(jskj_zclb == '8')
+            sblxCH = "辅助设备";
+        else if(jskj_zclb == '9')
+            sblxCH = "其他设备";
         return sblxCH;
     }
     function drawJW2D(jwList){
